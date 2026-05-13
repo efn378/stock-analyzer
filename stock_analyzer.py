@@ -6,8 +6,15 @@ import numpy as np
 st.title("Stock Odds Analyzer")
 
 def calculate_score(ticker):
+
     try:
-        data = yf.download(ticker, period="20y", auto_adjust=True, progress=False)
+
+        data = yf.download(
+            ticker,
+            period="20y",
+            auto_adjust=True,
+            progress=False
+        )
 
         if data.empty or len(data) < 220:
             return None
@@ -34,12 +41,22 @@ def calculate_score(ticker):
         latest_sma200 = float(sma200.iloc[-1])
         latest_rsi = float(rsi.iloc[-1])
 
-        one_week = ((latest_close / float(close.iloc[-5])) - 1) * 100
-        one_month = ((latest_close / float(close.iloc[-21])) - 1) * 100
-        three_month = ((latest_close / float(close.iloc[-63])) - 1) * 100
+        one_week = (
+            (latest_close / float(close.iloc[-5])) - 1
+        ) * 100
+
+        one_month = (
+            (latest_close / float(close.iloc[-21])) - 1
+        ) * 100
+
+        three_month = (
+            (latest_close / float(close.iloc[-63])) - 1
+        ) * 100
 
         volatility = float(
-            close.pct_change().tail(63).std() * np.sqrt(252) * 100
+            close.pct_change().tail(63).std()
+            * np.sqrt(252)
+            * 100
         )
 
         bullish_score = 0
@@ -76,8 +93,10 @@ def calculate_score(ticker):
 
         if 45 <= latest_rsi <= 65:
             rsi_score = 20
+
         elif 35 <= latest_rsi < 45 or 65 < latest_rsi <= 75:
             rsi_score = 12
+
         else:
             rsi_score = 4
 
@@ -90,16 +109,24 @@ def calculate_score(ticker):
             - volatility_penalty
         )
 
-        rank_score = round(max(min(rank_score, 100), 0), 1)
+        rank_score = round(
+            max(min(rank_score, 100), 0),
+            1
+        )
 
-        if latest_close > latest_sma200 and latest_sma50 > latest_sma200:
+        if (
+            latest_close > latest_sma200
+            and latest_sma50 > latest_sma200
+        ):
             trend = "Bullish"
+
         elif latest_close < latest_sma200:
             trend = "Bearish"
+
         else:
             trend = "Neutral"
 
-        # ---------- PREDICTION ENGINE ----------
+        # ---------- PREDICTIONS ----------
 
         expected_week_move = (
             (rank_score / 100) * 4
@@ -121,8 +148,10 @@ def calculate_score(ticker):
 
         if rank_score >= 85:
             confidence = "High"
+
         elif rank_score >= 70:
             confidence = "Moderate"
+
         else:
             confidence = "Low"
 
@@ -151,7 +180,10 @@ def calculate_score(ticker):
 
 st.header("Single Stock Analysis")
 
-ticker = st.text_input("Enter ticker", "AAPL").upper()
+ticker = st.text_input(
+    "Enter ticker",
+    "AAPL"
+).upper()
 
 if ticker:
 
@@ -161,12 +193,32 @@ if ticker:
 
         st.subheader(result["ticker"])
 
-        st.write(f"Current Price: ${result['price']:.2f}")
-        st.write(f"RSI: {result['rsi']:.1f}")
-        st.write(f"Bullish Score: {result['bullish_score']}/6")
-        st.write(f"Ranking Score: {result['rank_score']}/100")
-        st.write(f"Trend: {result['trend']}")
-        st.write(f"Confidence: {result['confidence']}")
+        st.write(
+            f"Current Price: ${result['price']:.2f}"
+        )
+
+        st.write(
+            f"RSI: {result['rsi']:.1f}"
+        )
+
+        st.write(
+            f"Bullish Score: "
+            f"{result['bullish_score']}/6"
+        )
+
+        st.write(
+            f"Ranking Score: "
+            f"{result['rank_score']}/100"
+        )
+
+        st.write(
+            f"Trend: {result['trend']}"
+        )
+
+        st.write(
+            f"Confidence: "
+            f"{result['confidence']}"
+        )
 
         st.write(
             f"Predicted 1 Week Price: "
@@ -178,10 +230,25 @@ if ticker:
             f"${result['predicted_month_price']:.2f}"
         )
 
-        st.write(f"1 Week Return: {result['one_week']:.1f}%")
-        st.write(f"1 Month Return: {result['one_month']:.1f}%")
-        st.write(f"3 Month Return: {result['three_month']:.1f}%")
-        st.write(f"Volatility: {result['volatility']:.1f}%")
+        st.write(
+            f"1 Week Return: "
+            f"{result['one_week']:.1f}%"
+        )
+
+        st.write(
+            f"1 Month Return: "
+            f"{result['one_month']:.1f}%"
+        )
+
+        st.write(
+            f"3 Month Return: "
+            f"{result['three_month']:.1f}%"
+        )
+
+        st.write(
+            f"Volatility: "
+            f"{result['volatility']:.1f}%"
+        )
 
         st.line_chart(result["chart"])
 
@@ -189,16 +256,62 @@ if ticker:
         st.error("No data found.")
 
 
-# ---------- TOP 10 STOCK SCANNER ----------
-
-st.header("Top 10 Stocks This Week")
+# ---------- STOCK UNIVERSE ----------
 
 tickers = [
+
+    # Mega-cap / growth
     "AAPL", "MSFT", "NVDA", "AMZN", "META",
-    "GOOGL", "TSLA", "AMD", "NFLX", "PLTR",
-    "JPM", "V", "MA", "COST", "AVGO",
-    "SPY", "QQQ", "DIA", "IWM"
+    "GOOGL", "GOOG", "TSLA", "AVGO", "AMD",
+    "NFLX", "PLTR", "ADBE", "CRM", "ORCL",
+    "INTC", "QCOM", "TXN", "MU", "NOW",
+    "SHOP", "UBER", "ABNB", "SNOW", "PANW",
+    "CRWD", "ZS", "NET", "DDOG", "MDB",
+    "COIN", "RBLX",
+
+    # Large caps
+    "COST", "WMT", "HD", "LOW", "MCD",
+    "SBUX", "NKE", "DIS", "V", "MA",
+    "AXP", "JPM", "BAC", "GS", "MS",
+    "BLK", "UNH", "LLY", "JNJ", "ABBV",
+    "MRK", "PFE", "TMO", "ISRG", "CAT",
+    "DE", "GE", "HON", "RTX", "LMT",
+    "BA", "UPS",
+
+    # Energy
+    "XOM", "CVX", "COP", "SLB",
+    "OXY", "EOG", "NEM", "GOLD",
+
+    # ETFs
+    "SPY", "QQQ", "DIA", "IWM",
+    "VTI", "VOO", "SCHD", "XLK",
+    "XLF", "XLE", "XLV", "SMH",
+    "SOXX", "ARKK",
+
+    # Canadian
+    "SHOP.TO", "RY.TO", "TD.TO",
+    "BNS.TO", "BMO.TO", "CM.TO",
+    "NA.TO", "ENB.TO", "TRP.TO",
+    "CNQ.TO", "SU.TO", "CVE.TO",
+    "CP.TO", "CNR.TO", "BAM.TO",
+    "BN.TO", "ATD.TO", "CSU.TO",
+    "WCN.TO", "FTS.TO", "EMA.TO",
+    "AQN.TO", "T.TO", "BCE.TO",
+    "NTR.TO", "TECK-B.TO",
+    "ABX.TO", "WPM.TO",
+
+    # Canadian ETFs
+    "XEQT.TO", "VEQT.TO",
+    "VFV.TO", "XQQ.TO",
+    "ZSP.TO", "ZWB.TO",
+    "BK.TO", "XIU.TO",
+    "XIC.TO"
 ]
+
+
+# ---------- TOP STOCKS ----------
+
+st.header("Top Stocks This Week")
 
 results = []
 
@@ -211,18 +324,39 @@ with st.spinner("Scanning stocks..."):
         if result:
 
             results.append({
-                "Ticker": result["ticker"],
-                "Current": round(result["price"], 2),
-                "1W Target": round(
-                    result["predicted_week_price"], 2
+
+                "Ticker":
+                result["ticker"],
+
+                "Current":
+                round(result["price"], 2),
+
+                "1W Target":
+                round(
+                    result["predicted_week_price"],
+                    2
                 ),
-                "1M Target": round(
-                    result["predicted_month_price"], 2
+
+                "1M Target":
+                round(
+                    result["predicted_month_price"],
+                    2
                 ),
-                "Confidence": result["confidence"],
-                "Rank": result["rank_score"],
-                "Trend": result["trend"],
-                "RSI": round(result["rsi"], 1)
+
+                "Confidence":
+                result["confidence"],
+
+                "Rank":
+                result["rank_score"],
+
+                "Trend":
+                result["trend"],
+
+                "RSI":
+                round(
+                    result["rsi"],
+                    1
+                )
             })
 
 if results:
@@ -239,6 +373,6 @@ if results:
     df.index = df.index + 1
 
     st.dataframe(
-        df.head(10),
+        df.head(25),
         use_container_width=True
     )

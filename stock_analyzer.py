@@ -3,7 +3,15 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-st.title("Stock Odds Analyzer")
+st.set_page_config(
+    page_title="Stock Odds Analyzer",
+    layout="wide"
+)
+
+st.title("📈 Stock Odds Analyzer")
+
+
+# ---------- CALCULATION ENGINE ----------
 
 def calculate_score(ticker):
 
@@ -178,7 +186,7 @@ def calculate_score(ticker):
 
 # ---------- SINGLE STOCK ANALYZER ----------
 
-st.header("Single Stock Analysis")
+st.header("🔍 Single Stock Analysis")
 
 ticker = st.text_input(
     "Enter ticker",
@@ -191,64 +199,105 @@ if ticker:
 
     if result:
 
-        st.subheader(result["ticker"])
+        st.subheader(f"📊 {result['ticker']}")
 
-        st.write(
-            f"Current Price: ${result['price']:.2f}"
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric(
+            "Current Price",
+            f"${result['price']:.2f}"
         )
 
-        st.write(
-            f"RSI: {result['rsi']:.1f}"
+        col2.metric(
+            "1 Week Target",
+            f"${result['predicted_week_price']:.2f}",
+            f"{((result['predicted_week_price'] / result['price']) - 1) * 100:.1f}%"
         )
 
-        st.write(
-            f"Bullish Score: "
-            f"{result['bullish_score']}/6"
+        col3.metric(
+            "1 Month Target",
+            f"${result['predicted_month_price']:.2f}",
+            f"{((result['predicted_month_price'] / result['price']) - 1) * 100:.1f}%"
         )
 
-        st.write(
-            f"Ranking Score: "
+        st.divider()
+
+        col4, col5, col6 = st.columns(3)
+
+        col4.metric(
+            "Ranking Score",
             f"{result['rank_score']}/100"
         )
 
-        st.write(
-            f"Trend: {result['trend']}"
+        col5.metric(
+            "RSI",
+            f"{result['rsi']:.1f}"
         )
 
-        st.write(
-            f"Confidence: "
-            f"{result['confidence']}"
-        )
-
-        st.write(
-            f"Predicted 1 Week Price: "
-            f"${result['predicted_week_price']:.2f}"
-        )
-
-        st.write(
-            f"Predicted 1 Month Price: "
-            f"${result['predicted_month_price']:.2f}"
-        )
-
-        st.write(
-            f"1 Week Return: "
-            f"{result['one_week']:.1f}%"
-        )
-
-        st.write(
-            f"1 Month Return: "
-            f"{result['one_month']:.1f}%"
-        )
-
-        st.write(
-            f"3 Month Return: "
-            f"{result['three_month']:.1f}%"
-        )
-
-        st.write(
-            f"Volatility: "
+        col6.metric(
+            "Volatility",
             f"{result['volatility']:.1f}%"
         )
+
+        st.progress(result["rank_score"] / 100)
+
+        st.write(f"### Trend: {result['trend']}")
+        st.write(f"### Confidence: {result['confidence']}")
+        st.write(f"### Bullish Score: {result['bullish_score']}/6")
+
+        st.divider()
+
+        chart_data = pd.DataFrame({
+            "Metric": [
+                "Ranking Score",
+                "RSI",
+                "Bullish %",
+                "Confidence"
+            ],
+            "Value": [
+                result["rank_score"],
+                result["rsi"],
+                (result["bullish_score"] / 6) * 100,
+                100 if result["confidence"] == "High"
+                else 70 if result["confidence"] == "Moderate"
+                else 40
+            ]
+        })
+
+        st.write("## 📊 Technical Strength")
+
+        st.bar_chart(
+            chart_data,
+            x="Metric",
+            y="Value"
+        )
+
+        st.divider()
+
+        prediction_data = pd.DataFrame({
+            "Time": [
+                "Current",
+                "1 Week",
+                "1 Month"
+            ],
+            "Price": [
+                result["price"],
+                result["predicted_week_price"],
+                result["predicted_month_price"]
+            ]
+        })
+
+        st.write("## 🔮 Predicted Price Path")
+
+        st.line_chart(
+            prediction_data,
+            x="Time",
+            y="Price"
+        )
+
+        st.divider()
+
+        st.write("## 📈 20 Year Price History")
 
         st.line_chart(result["chart"])
 
@@ -311,7 +360,7 @@ tickers = [
 
 # ---------- TOP STOCKS ----------
 
-st.header("Top Stocks This Week")
+st.header("🏆 Top Stocks This Week")
 
 results = []
 
